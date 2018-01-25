@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <script type="text/javascript">
-      // Example Output
+      // Example Output////////////////////////////////////////////////////
       // What is your name? ← Jamie
       // Welcome Jamie!
       // Please enter a number: ← 101
@@ -17,7 +17,23 @@
       // Guess a number between 0 and 101: ← 41
       // Correct! The number was 41.
       // Thanks for playing!
-    
+
+      // Requirements//////////////////////////////////////////////////////
+      // The game must ask the player for their name and log out a welcome message
+      // The game must call the startGame function exactly once
+      // You must define and use the functions laid out in Step 5
+      // The game must accept the upper limit for random numbers from the user
+      // If the user enters 10, the game must select a number from the range 0 <= n <= 10
+      // If the user enters 0, you should exit the game
+      // The game must give the user some direction on how to achieve a correct answer
+      // If their guess is too low, the game should print "Too low!"
+      // If their guess is too low, the game should print "Too high!"
+      // The game must end when the user enters a correct guess
+      // The game must continue if the user enters an incorrect guess
+      // You must correctly parse all user inputs to their correct types
+
+
+
     function generateRandomNumber(max) {
       // generate a random integer between 0 and max
       return Math.floor(Math.random() * max);
@@ -25,10 +41,10 @@
 
     function getGuessFromUser(guess, diff, min, max) {
       // takes care of prompting the user for a guess and converting it to a number
-      console.log("Last guess was " + guess);
       if(guess === undefined) {
         guess = prompt("Guess a number between 0 and " + max + ":");
       } else {
+        console.log("Last guess was " + guess);
         if(diff === "Over") {
           guess = prompt("Guess a number between " + min + " and " + guess + ":");
         } else {
@@ -41,11 +57,27 @@
       return Number(guess);
     }
 
+    function getDifficultyFromUser() {
+      let difficulty = prompt("Please choose game difficulty: Custom (0), Easy (1), Medium (2), Hard (3)");
+      switch(difficulty) {
+        case "0":
+          return "custom";
+        case "1":
+          return "easy";
+        case "2":
+          return "medium";
+        case "3":
+          return "hard";
+        default:
+          return getDifficultyFromUser();
+      }
+    }
+
     function getMaxFromUser() {
       // gets the maximum number for the game from the user and returns it as a Number
-      var max = prompt("Please enter a number: ");
-      while (isNaN(max)) {
-        max = prompt("You entered " + max + ", please enter a valid number: ");
+      var max = prompt("Please enter a number for the max limit or 0 to quit: ");
+      while (isNaN(max) || max === "") {
+        max = prompt("You entered [" + max + "], please enter a valid number: ");
       }
       return Number(max);
     }
@@ -82,8 +114,9 @@
       this.diff = diff;
     }
 
-    function Game(difficulty, max, goal, status, guesses) {
+    function Game(difficulty, maxGuesses, max, goal, status, guesses) {
       this.difficulty = difficulty;
+      this.maxGuesses = maxGuesses;
       this.max = max;
       this.goal = goal;
       this.status = status;
@@ -110,7 +143,8 @@
       // Obj (Player) --> Obj (Game - Difficulty, Status) {Guesses & Diffs}
       let playerList = [];
       let quit = false;
-      const difficulty = {
+      const difficultyLevels = {
+        custom: 0,
         easy: 10,
         medium: 5,
         hard: 1
@@ -124,65 +158,78 @@
         if(newPlayerStatus) {
           player.name = prompt("What is your name?");
           playerList.push(player); //Added a new player to playerList
-          
           alert("Welcome " + player.name + "!");
           newPlayerStatus = false;
         }
 
-        //Choose difficulty and max number
-        let gameDifficulty = difficulty.easy; //prompt User Input
+        //Choose difficulty level and max number (Custom);
+        let gameDifficulty = getDifficultyFromUser(); //prompt User Input
+        let maxGuesses = difficultyLevels[gameDifficulty];
+        alert("You are allowed " + maxGuesses + " guesses.");
         let gameMax = getMaxFromUser();
         let gameGoal = generateRandomNumber(gameMax);
-        let currentGame = new Game(gameDifficulty, gameMax, gameGoal, "Unplayed", new Array());
+
+        let currentGame = new Game(gameDifficulty, maxGuesses, gameMax, gameGoal, "Unplayed", new Array());
 
         let min = 0;
         let max = currentGame.max;
-        alert('You have chosen the number ' + max);
-        const goal = currentGame.goal;
-        let guess = new Guess();
-        let guesses = [];
+        if(max === 0) {
+          alert("You entered 0 to quit this game.")
+        } else {
+          alert("You have chosen " + max + " as the max.");
+          const goal = currentGame.goal;
+          let guess = new Guess();
+          let guesses = [];
 
-        // let sum = 5 + Number(number);
-        // alert(number + ' plus ' + 5 + ' is ' + sum);
-        // var target = Math.floor(Math.random() * number);
-        while(!gameComplete) {
-          console.log("[Hint] The answer is " + goal + ".");
-          let currentGuessValue = getGuessFromUser(guess.value, guess.diff, min, max);
-          let currentGuessDiff = getDiff(currentGuessValue, goal);
-          // guess.value = getGuessFromUser(guess.value, guess.diff, min, max);
-          // guess.diff = getDiff(guess.value, goal);
-          guess = new Guess(currentGuessValue, currentGuessDiff);
-          // console.log(guess.value + " " + guess.diff);
-          // console.log("Guess Object: ");
-          // console.log(guess);
-          guesses.push(guess);
-          // console.log(guesses);
-          if(isGuessCorrect(goal, guess)) {
-            alert("Correct! The number was " + goal + ".");
-            alert("Thanks for playing");
-            currentGame.status = "Win";
-            currentGame.guesses.push(guesses);
-            player.gameRecords.push(currentGame);
-            console.log(playerList);
-            gameComplete = true;
-          } else {
-            if (guess.diff === "Over") {
-              alert("Too high!")
-              max = currentGuessValue;
-              // max = guess.value;
-            }
-            else {
-              alert("Too low!")
-              min = currentGuessValue;
-              // min = guess.value;
+          // let sum = 5 + Number(number);
+          // alert(number + ' plus ' + 5 + ' is ' + sum);
+          // var target = Math.floor(Math.random() * number);
+          while(!gameComplete) {
+            console.log("[Hint] The answer is " + goal + ".");
+            let guessesLeft = maxGuesses - guesses.length;
+            console.log("You have " + guessesLeft + " guesses left.");
+            if(guessesLeft != 0) {
+              let currentGuessValue = getGuessFromUser(guess.value, guess.diff, min, max);
+              let currentGuessDiff = getDiff(currentGuessValue, goal);
+              // guess.value = getGuessFromUser(guess.value, guess.diff, min, max);
+              // guess.diff = getDiff(guess.value, goal);
+              guess = new Guess(currentGuessValue, currentGuessDiff);
+              guesses.push(guess);
+
+              if(isGuessCorrect(goal, guess)) {
+                alert("Correct! The number was " + goal + ".");
+                alert("Thanks for playing");
+                currentGame.status = "Win";
+                currentGame.guesses.push(guesses);
+                player.gameRecords.push(currentGame);
+                console.log(playerList);
+                gameComplete = true;
+              } else {
+                if (guess.diff === "Over") {
+                  alert("Too high!")
+                  max = currentGuessValue;
+                  // max = guess.value;
+                }
+                else {
+                  alert("Too low!")
+                  min = currentGuessValue;
+                  // min = guess.value;
+                }
+              }
+            } else {
+                alert("Oh no! You've ran out of guesses!");
+                currentGame.status = "Lose";
+                currentGame.guesses.push(guesses);
+                player.gameRecords.push(currentGame);
+                console.log(playerList);
+                gameComplete = true;
             }
           }
         }
         let replay = prompt("Would you like to play again?");
-        if(!userInputBooleanCheck(replay)) {
+        if(!userInputBooleanCheck(replay)) { //if answered no
           quit = true;
           newPlayerStatus = true;
-          // gameComplete = false;
         } else {
 
         }
