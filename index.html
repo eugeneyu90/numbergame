@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy"
+      crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+      crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4"
+      crossorigin="anonymous"></script>
     <script type="text/javascript">
       // Example Output////////////////////////////////////////////////////
       // What is your name? ← Jamie
@@ -39,20 +47,17 @@
       return Math.floor(Math.random() * max);
     }
 
-    function getGuessFromUser(guess, diff, min, max) {
+    function getGuessFromUser(guess, min, max) {
       // takes care of prompting the user for a guess and converting it to a number
       if(guess === undefined) {
         guess = prompt("Guess a number between 0 and " + max + ":");
       } else {
         console.log("Last guess was " + guess);
-        if(diff === "Over") {
-          guess = prompt("Guess a number between " + min + " and " + guess + ":");
-        } else {
-          guess = prompt("Guess a number between " + guess + " and " + max + ":");
-        }
+        guess = prompt("Guess a number between " + min + " and " + max + ":");
       }
-      while (isNaN(guess)) {
-        guess = prompt("You entered " + guess + ", please enter a valid number: ");
+      while (isNaN(guess) || (guess < min || guess > max) || guess === "") {
+        guess = prompt("You entered [" + guess + "], please enter a valid number between " + min + " and " + max);
+        console.log("min: " + min + "\nmax: " + max);
       }
       return Number(guess);
     }
@@ -104,9 +109,11 @@
         return "Correct";
     }
 
-    function Player(name, gameRecords) {
+    function Player(listIndex, name, gameRecords) {
+      this.listIndex = listIndex;
       this.name = name;
       this.gameRecords = gameRecords;
+
     }
 
     function Guess(value, diff) {
@@ -137,7 +144,37 @@
       }
     }
 
+    function checkExistingPlayer (playerList, playerName) {
+      let exists = null;
+      // playerList = [new Player("Eugene", Array()), new Player("Tomy", Array())];
+      playerList.forEach(function(player) {
+        console.log(player.name);
+        console.log(playerName);
+        if (player.name === playerName) {
+          console.log("Found existing player!");
+          exists = playerList.indexOf(player);
+        }
+      });
+      return exists;
+    }
+
+    function waitForInput() {
+      var input = null;
+      console.log("entered wait function");
+      $('#userInput').on("keypress", function (event) {
+        if (event.keyCode === 13) {
+          input = $('#userInput').value();
+          $('#userInput').value = "";
+        }
+      });
+      return input;
+    }
+
     function startGame() {
+      $('#startButton').hide();
+      $('#messageBox').show();
+      $('#userInputBar').show();
+
       // code that houses the while loop for our game. call this function once to begin
       // New Player --> Players Array
       // Obj (Player) --> Obj (Game - Difficulty, Status) {Guesses & Diffs}
@@ -150,30 +187,51 @@
         hard: 1
       }
       let newPlayerStatus = true;
-      let player = new Player(null, new Array());
+      let playerIndex = null;
+      const gameStates = {
+        getStartGame: 0,
+        getPlayerName: 1,
+        getListIndex: 2,
+
+      }
+      let currentState = gameStates["getStartGame"];
 
       while(!quit) {
         // Initialize newPlayerStatus variables
         let gameComplete = false;
+        let player = new Player(null, null, Array());
         if(newPlayerStatus) {
-          player.name = prompt("What is your name?");
-          playerList.push(player); //Added a new player to playerList
-          alert("Welcome " + player.name + "!");
-          newPlayerStatus = false;
-        }
 
-        //Choose difficulty level and max number (Custom);
-        let gameDifficulty = getDifficultyFromUser(); //prompt User Input
+          let playerName = prompt("What is your name?");
+          player.listIndex = checkExistingPlayer(playerList, playerName);
+          player.name = playerName;
+          console.log(player.listIndex);
+          if(player.listIndex != null) {
+            alert("Welcome back " + player.name + "!");
+            player = playerList[player.listIndex];
+            newPlayerStatus = false;
+          } else {
+            player.gameRecords = Array();
+            playerList.push(player); //Added a new player to playerList
+            player.listIndex = playerList.length-1;
+            console.log(player.listIndex);
+            alert("Welcome " + player.name + "!");
+            newPlayerStatus = false;
+          }
+
+        }
+        //Get mode and max for new game creation
+        let gameDifficulty = getDifficultyFromUser(); 
         let maxGuesses = difficultyLevels[gameDifficulty];
         alert("You are allowed " + maxGuesses + " guesses.");
         let gameMax = getMaxFromUser();
         let gameGoal = generateRandomNumber(gameMax);
 
+        // Creating a new Game with custom settings
         let currentGame = new Game(gameDifficulty, maxGuesses, gameMax, gameGoal, "Unplayed", new Array());
-
         let min = 0;
         let max = currentGame.max;
-        if(max === 0) {
+        if(max === 0) { // if 0 is entered, quit to main menu
           alert("You entered 0 to quit this game.")
         } else {
           alert("You have chosen " + max + " as the max.");
@@ -184,63 +242,82 @@
           // let sum = 5 + Number(number);
           // alert(number + ' plus ' + 5 + ' is ' + sum);
           // var target = Math.floor(Math.random() * number);
-          while(!gameComplete) {
+          while(!gameComplete) {  //Looped guess attempts for created game
             console.log("[Hint] The answer is " + goal + ".");
             let guessesLeft = maxGuesses - guesses.length;
             console.log("You have " + guessesLeft + " guesses left.");
-            if(guessesLeft != 0) {
-              let currentGuessValue = getGuessFromUser(guess.value, guess.diff, min, max);
+            if(guessesLeft != 0) {  //player still have guesses left
+              let currentGuessValue = getGuessFromUser(guess.value, min, max);
               let currentGuessDiff = getDiff(currentGuessValue, goal);
-              // guess.value = getGuessFromUser(guess.value, guess.diff, min, max);
-              // guess.diff = getDiff(guess.value, goal);
               guess = new Guess(currentGuessValue, currentGuessDiff);
               guesses.push(guess);
 
-              if(isGuessCorrect(goal, guess)) {
+              if(isGuessCorrect(goal, guess)) { //if Guess is correct
                 alert("Correct! The number was " + goal + ".");
                 alert("Thanks for playing");
                 currentGame.status = "Win";
                 currentGame.guesses.push(guesses);
-                player.gameRecords.push(currentGame);
-                console.log(playerList);
+                playerList[player.listIndex].gameRecords.push(currentGame);
                 gameComplete = true;
-              } else {
+              } else { //if guess is incorrect.
                 if (guess.diff === "Over") {
                   alert("Too high!")
-                  max = currentGuessValue;
-                  // max = guess.value;
+                  max = currentGuessValue - 1;
                 }
                 else {
                   alert("Too low!")
-                  min = currentGuessValue;
-                  // min = guess.value;
+                  min = currentGuessValue + 1;
                 }
               }
             } else {
                 alert("Oh no! You've ran out of guesses!");
                 currentGame.status = "Lose";
                 currentGame.guesses.push(guesses);
-                player.gameRecords.push(currentGame);
-                console.log(playerList);
+                playerList[player.listIndex].gameRecords.push(currentGame);
                 gameComplete = true;
             }
           }
         }
-        let replay = prompt("Would you like to play again?");
+        console.log(playerList);
+        let replay = prompt("Hi " + player.name + ", would you like to play again?");
         if(!userInputBooleanCheck(replay)) { //if answered no
-          quit = true;
           newPlayerStatus = true;
+          let quitNow = prompt("Do you want to quit the game?");
+          if (userInputBooleanCheck(quitNow)) {
+            quit = true;
+          }
         } else {
-
+          alert("A new game is starting...");
         }
       }
     }
-    startGame();
-
   </script>
-
 </head>
 <body>
-  
+  <header class="jumbotron py-3 my-0">
+    <div class="container text-center">
+      <h1 class="display-4">Number Guessing Game</h1>
+    </div>
+  </header>
+  <main class="container-fluid">
+    <div class="row text-center align-middle" style="background-color: rgb(32, 32, 32);">
+      <div id="startButton" class="col" style="height: 500px; padding-top: 200px;">
+        <button type="button" class="button p-5 lead" onclick="startGame()">Start Game</button>
+      </div>
+      <div id="messageBox" class="container-fluid" style="height: 300px; padding-top: 200px; display: none;">
+        <div class="row text-white text-center align-middle">
+          <span id="message" class="col display-5">What is your name?</span>
+        </div>
+      </div>
+      <div id="userInputBar" class="container-fluid" style="height: 200px; padding-top: 100; display: none;">
+        <div class="row px-5">
+          <div class="col">
+            <input id="nameInput" class="d-none" type="text" placeholder="Enter here...">
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
 </body>
 </html>
