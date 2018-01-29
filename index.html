@@ -4,432 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Number Guessing Game</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy"
       crossorigin="anonymous">
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
       crossorigin="anonymous">
     <link href="styles.css" rel="stylesheet">
+    <script src="popper.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
       crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4"
       crossorigin="anonymous"></script>
-    <script type="text/javascript">
-      // Example Output////////////////////////////////////////////////////
-      // What is your name? ← Jamie
-      // Welcome Jamie!
-      // Please enter a number: ← 101
-      // Great. Let"s play!
-      // Guess a number between 0 and 101: ← 25
-      // Too low! Guess a number between 0 and 101: ← 50
-      // Too high!
-      // Guess a number between 0 and 101: ← 41
-      // Correct! The number was 41.
-      // Thanks for playing!
-
-      // Requirements//////////////////////////////////////////////////////
-      // The game must ask the player for their name and log out a welcome message
-      // The game must call the startGame function exactly once
-      // You must define and use the functions laid out in Step 5
-      // The game must accept the upper limit for random numbers from the user
-      // If the user enters 10, the game must select a number from the range 0 <= n <= 10
-      // If the user enters 0, you should exit the game
-      // The game must give the user some direction on how to achieve a correct answer
-      // If their guess is too low, the game should print "Too low!"
-      // If their guess is too low, the game should print "Too high!"
-      // The game must end when the user enters a correct guess
-      // The game must continue if the user enters an incorrect guess
-      // You must correctly parse all user inputs to their correct types
-
-
-  // INITIALIZED GLOBAL VARIABLES START***********************************************
-
-  let playerList = [];
-  let quit = false;
-  let newPlayerStatus = true;
-  let playerIndex = null;
-  let gameComplete = false;
-  let player = new Player("", "", new Array());
-  let game = new Game("", "", "");
-  let currentGame = new Game("", "", "", "", "Unplayed", new Array());
-
-  let input = null;
-  const difficultyLevels = {
-    custom: 0,
-    easy: 10,
-    medium: 5,
-    hard: 1
-  }
-  const states = {
-    1: "nameInput",
-    2: "difficultyInput",
-    3: "maxInput",
-    4: "guessInput",
-    5: "replayInput",
-    6: "newPlayerInput"
-  }
-  let currentState = 1;
-
-    // GLOBAL INITIALIZED VARIABLES END***********************************************
-
-    function generateRandomNumber(max) {
-      // generate a random integer between 0 and max
-      return Math.floor(Math.random() * max);
-    }
-
-    function getGuessFromUser(guess, min, max) {
-      // takes care of prompting the user for a guess and converting it to a number
-      if(guess === undefined) {
-        guess = prompt("Guess a number between 0 and " + max + ":");
-      } else {
-        console.log("Last guess was " + guess);
-        guess = prompt("Guess a number between " + min + " and " + max + ":");
-      }
-      while (isNaN(guess) || (guess < min || guess > max) || guess === "") {
-        guess = prompt("You entered [" + guess + "], please enter a valid number between " + min + " and " + max);
-        console.log("min: " + min + "\nmax: " + max);
-      }
-      return Number(guess);
-    }
-
-
-
-    function isGuessCorrect(goal, guess) {
-      // check if a guess is correct and return a boolean
-      if(guess.value === goal)
-        return true;
-      else
-        return false;
-    }
-
-    function getDiff(guess, goal) {
-      let diff = goal - guess;   //4 = 7 - 3 --> Too High // -1 = 7 - 8 --> Too Low
-      console.log("Goal = " + goal);
-      console.log("Guess = " + guess);
-
-      console.log("Difference: " + diff);
-      if (diff < 0)
-        return "Over";
-      else if ( diff > 0) 
-        return "Under";
-      else 
-        return "Correct";
-    }
-
-    function Player(listIndex, name, gameRecords) {
-      this.listIndex = listIndex;
-      this.name = name;
-      this.gameRecords = gameRecords;
-
-    }
-
-    function Guess(value, diff) {
-      this.value = value;
-      this.diff = diff;
-    }
-
-    function Game(difficulty, maxGuesses, max, goal, status, guesses) {
-      this.difficulty = difficulty;
-      this.maxGuesses = maxGuesses;
-      this.max = max;
-      this.goal = goal;
-      this.status = status;
-      this.guesses = guesses;
-    }
-
-    function userInputBooleanCheck(input) {
-      switch (input) {
-        case "y":
-        case "yes":
-          return true;
-        case "n":
-        case "no":
-          return false;
-        default:
-          input = prompt("Please enter either yes or no.");
-          return userInputBooleanCheck(input);
-      }
-    }
-
-    function checkExistingPlayer (playerList, playerName) {
-      let exists = null;
-      // playerList = [new Player("Eugene", Array()), new Player("Tomy", Array())];
-      playerList.forEach(function(player) {
-        console.log(player.name);
-        console.log(playerName);
-        if (player.name === playerName) {
-          console.log("Found existing player!");
-          exists = playerList.indexOf(player);
-        }
-      });
-      return exists;
-    }
-
-    function waitForInput(event) {
-      let id = "#" + states[currentState];
-      console.log(id);
-      console.log(currentState);
-      if (event.keyCode === 13) {
-        console.log("Input was " + input);
-        input = $(id).val();
-        console.log("Enter was entered.. and input: " + input)
-        switch(currentState) {
-          case 1:
-            getNameFromUser(input);
-            break;
-          case 2:
-            getDifficultyFromUser(input);
-            break;
-          case 3:
-            getMaxFromUser(input);
-          default:
-            break;
-        }
-      }
-    }
-    var changeMessage = () => {
-      var messages = {
-        0: "Enter your name: ",
-        1: "Welcome " + player.name + "! <br>Please enter the game difficulty: Custom (0), Easy (1), Medium (2), Hard (3)",
-        2: "Enter a number for the max limit or 0 to quit: "
-      }
-      console.log(messages);
-      console.log(player.name);
-      $("#message").html(messages[currentState]);
-    }
-
-    var addError = () => {
-      $("#messageError").html("Please enter a valid input!!!");
-    }
-
-    var changeToNextState = () => {
-      $("#" + states[currentState]).val("");
-      $("#" + states[currentState]).attr("id", states[currentState + 1]);
-      currentState += 1;
-      console.log("currentState is now " + currentState);
-    }
-
-    var getNameFromUser = (input) => {
-      player.name = input;
-      // var player = new Player(input, "", Array());
-      console.log(player.name);
-      changeMessage();
-      changeToNextState();
-    }
-    
-    function getDifficultyFromUser(input) {
-      // let difficulty = prompt("Please choose game difficulty: Custom (0), Easy (1), Medium (2), Hard (3)");
-      console.log(input);
-      switch (input) {
-        case "0":
-          changeMessage();
-          changeToNextState();
-          currentGame.difficulty = "custom";
-          break;
-        case "1":
-          changeMessage();
-          changeToNextState();
-          currentGame.difficulty = "easy";
-          break;
-        case "2":
-          changeMessage();
-          changeToNextState();
-          currentGame.difficulty = "medium";
-          break;
-        case "3":
-          changeMessage();
-          changeToNextState();
-          currentGame.difficulty = "hard";
-          break;
-        default:
-          console.log("Bad input: " + input)
-          addError();
-          $(states[currentState]).val("");
-          break;
-      }
-    }
-      function getMaxFromUser(input) {
-        let max = input;
-        // gets the maximum number for the game from the user and returns it as a Number
-        //var max = prompt("Please enter a number for the max limit or 0 to quit: ");
-        if (isNaN(input) || input === "") {
-          addError();
-          //max = prompt("You entered [" + max + "], please enter a valid number: ");
-        }
-        return Number(max);
-      }
-    
-    function startGame2() {
-      $("#startButton").hide();
-      $("#messageBox").show();
-      $("#userInputBar").show();
-      $("#nameInput").show();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    function startGame() {
-      $("#startButton").hide();
-      $("#messageBox").show();
-      $("#userInputBar").show();
-      $("#nameInput").show();
-      $("#nameInput").keyup(function(event) {
-        waitForInput(event, "#nameInput");
-      });
-      // code that houses the while loop for our game. call this function once to begin
-      // New Player --> Players Array
-      // Obj (Player) --> Obj (Game - Difficulty, Status) {Guesses & Diffs}
-      let playerList = [];
-      let quit = false;
-      const difficultyLevels = {
-        custom: 0,
-        easy: 10,
-        medium: 5,
-        hard: 1
-      }
-      let newPlayerStatus = true;
-      let playerIndex = null;
-      const gameStates = {
-        getStartGame: 0,
-        getPlayerName: 1,
-        getListIndex: 2,
-
-      }
-      
-      let currentState = gameStates["getStartGame"];
-
-      while(!quit) {
-        // Initialize newPlayerStatus variables
-        let gameComplete = false;
-        let player = new Player(null, null, Array());
-        if(newPlayerStatus) {
-          let playerName = undefined;
-          //let playerName = prompt("What is your name?");
-          player.listIndex = checkExistingPlayer(playerList, playerName);
-          player.name = playerName;
-          console.log(player.listIndex);
-          if(player.listIndex != null) {
-            alert("Welcome back " + player.name + "!");
-            player = playerList[player.listIndex];
-            newPlayerStatus = false;
-          } else {
-            player.gameRecords = Array();
-            playerList.push(player); //Added a new player to playerList
-            player.listIndex = playerList.length-1;
-            console.log(player.listIndex);
-            alert("Welcome " + player.name + "!");
-            newPlayerStatus = false;
-          }
-        }
-        //TESTING UI for getting name
-        if(currentState == 1) { 
-          console.log("Entered next state!"); 
-          return;
-        } else if(currentState == 2) {
-
-
-          //Get mode and max for new game creation
-          let gameDifficulty = getDifficultyFromUser(); 
-          let maxGuesses = difficultyLevels[gameDifficulty];
-          alert("You are allowed " + maxGuesses + " guesses.");
-          let gameMax = getMaxFromUser();
-          let gameGoal = generateRandomNumber(gameMax);
-  
-          // Creating a new Game with custom settings
-          let currentGame = new Game(gameDifficulty, maxGuesses, gameMax, gameGoal, "Unplayed", new Array());
-          let min = 0;
-          let max = currentGame.max;
-          if(max === 0) { // if 0 is entered, quit to main menu
-            alert("You entered 0 to quit this game.")
-          } else {
-            alert("You have chosen " + max + " as the max.");
-            const goal = currentGame.goal;
-            let guess = new Guess();
-            let guesses = [];
-  
-            // let sum = 5 + Number(number);
-            // alert(number + " plus " + 5 + " is " + sum);
-            // var target = Math.floor(Math.random() * number);
-            while(!gameComplete) {  //Looped guess attempts for created game
-              console.log("[Hint] The answer is " + goal + ".");
-              let guessesLeft = maxGuesses - guesses.length;
-              console.log("You have " + guessesLeft + " guesses left.");
-              if(guessesLeft != 0) {  //player still have guesses left
-                let currentGuessValue = getGuessFromUser(guess.value, min, max);
-                let currentGuessDiff = getDiff(currentGuessValue, goal);
-                guess = new Guess(currentGuessValue, currentGuessDiff);
-                guesses.push(guess);
-  
-                if(isGuessCorrect(goal, guess)) { //if Guess is correct
-                  alert("Correct! The number was " + goal + ".");
-                  alert("Thanks for playing");
-                  currentGame.status = "Win";
-                  currentGame.guesses.push(guesses);
-                  playerList[player.listIndex].gameRecords.push(currentGame);
-                  gameComplete = true;
-                } else { //if guess is incorrect.
-                  if (guess.diff === "Over") {
-                    alert("Too high!")
-                    max = currentGuessValue - 1;
-                  }
-                  else {
-                    alert("Too low!")
-                    min = currentGuessValue + 1;
-                  }
-                }
-              } else {
-                  alert("Oh no! You've ran out of guesses!");
-                  currentGame.status = "Lose";
-                  currentGame.guesses.push(guesses);
-                  playerList[player.listIndex].gameRecords.push(currentGame);
-                  gameComplete = true;
-              }
-            }
-          }
-        }
-        if(currentState == 5) {
-          console.log(playerList);
-          let replay = prompt("Hi " + player.name + ", would you like to play again?");
-          if(!userInputBooleanCheck(replay)) { //if answered no
-            newPlayerStatus = true;
-            let quitNow = prompt("Do you want to quit the game?");
-            if (userInputBooleanCheck(quitNow)) {
-              quit = true;
-            }
-          } else {
-            alert("A new game is starting...");
-          }
-
-        }
-      }
-    }
-  </script>
+    <script src="numberGame.js"></script>
 </head>
-<body>
+<body id="fireworksContainer">
+  <div class="before"></div> <!-- Fireworks CSS -->
+  <div class="after"></div> <!-- Fireworks CSS -->
   <header class="jumbotron py-3 my-0">
     <div class="container text-center">
       <h1 class="display-4">Number Guessing Game</h1>
     </div>
   </header>
   <main class="container-fluid">
-    <div class="row text-center align-middle" style="background-color: rgb(32, 32, 32);">
-      <div id="startButton" class="col" style="height: 500px; padding-top: 200px;">
-        <button type="button" class="button p-5 lead" onclick="startGame2()">Start Game</button>
+    <div class="row bg-black">
+      <div id="playerNameContainer" class="col text-white text-right">
+        <span id="playerName" class="lead d-hide">currentPlayer</span>
       </div>
-      <div id="messageBox" class="container-fluid" style="height: 300px; padding-top: 200px; display: none;">
+    </div>
+    <div id="guessesLeftContainer" class="row align-right" >
+      <div class="col text-white pt-3 text-right">
+        <span id="guessesLeft" class="lead d-hide">Guesses Left: </span>
+      </div>
+    </div>
+    <div id="playerScores" class="row text-center d-hide">
+      <div class="row">
+        <div class="col">
+          <div id="close" class="text-left text-white">
+            <button class="closeButton" onclick="closeScoreBoard()">X</span>
+          </div>
+        </div>
+      </div>
+      <div id="accordion" role="tablist" aria-multiselectable="true">
+        <div class="card">
+          <div class="card-header accordion-theme" role="tab" id="headingOne">
+            <h5 class="mb-0 text-center">
+              <a class="collapsed text-white th-size" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true"
+                aria-controls="collapseOne">
+                Easy - Top 5
+              </a>
+            </h5>
+          </div>
+          <div id="collapseOne" class="collapse show" role="tabpanel" aria-labelledby="headingOne">
+            <div class="card-block accordion-theme text-white p-3">
+              <table id="easyScores" class="table table-dark"></table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header accordion-theme" role="tab" id="headingTwo">
+            <h5 class="mb-0 text-center">
+              <a class="collapsed text-white th-size" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="true"
+                aria-controls="collapseTwo">
+                Medium - Top 5
+              </a>
+            </h5>
+          </div>
+          <div id="collapseTwo" class="collapse" role="tabpanel" aria-labelledby="headingTwo">
+            <div class="card-block accordion-theme text-white p-3">
+              <table id="mediumScores" class="table table-dark"></table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header accordion-theme" role="tab" id="headingThree">
+            <h5 class="mb-0 text-center">
+              <a class="collapsed text-white th-size" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true"
+                aria-controls="collapseThree">
+                Hard - Top 5
+              </a>
+            </h5>
+          </div>
+          <div id="collapseThree" class="collapse" role="tabpanel" aria-labelledby="headingThree">
+            <div class="card-block accordion-theme text-white p-3">
+              <table id="hardScores" class="table table-dark"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="gameDisplay" class="row text-center align-middle bg-black">
+      <div id="menuButtons" class="col text-center">
+        <button id="newPlayerButton" type="button" class="button lead" onclick="addPlayer()">New Player</button>
+        <button id="existingPlayerButton" type="button" class="button lead d-hide" onclick="addPlayer()">Existing Player</button>
+        <button id="playButton" type="button" class="button lead d-hide" onclick="startGame()">Play Now</button>
+        <button type="button" class="button lead" onclick="showScores()">High Scores</button>
+      </div>
+      <div id="messageBox" class="container-fluid">
         <div class="row white-text text-center align-middle">
-          <span id="message" class="col display-5">What is your name?</span>
+          <span id="message" class="col gameMessage"></span>
         </div>
         <div class="row red-text text-center align-middle">
-          <span id="messageError" class="col display-5 "></span>
+          <span id="messageError" class="col errorMessage"></span>
         </div>
       </div>
-      <div id="userInputBar" class="container-fluid" style="height: 200px; padding-top: 100; display: none;">
+      <div id="difficultyButtonsContainer" class="container d-hide">
+        <div class="row">
+          <div id="difficultyButtons" class="col text-center">
+            <button id="customButton" type="button" class="button lead" onclick="customMode()" data-toggle="tooltip" data-placement="right" title="Set the maximum guess attempts and the number limit!">Custom</button>
+            <button id="easyButton" type="button" class="button lead" onclick="easyMode()" data-toggle="tooltip" data-placement="right" title="Guess a number between 0 - 20 under 10 tries!">Easy</button>
+            <button id="mediumButton" type="button" class="button lead" onclick="mediumMode()" data-toggle="tooltip" data-placement="right" title="Guess a number between 0 - 30 under 8 tries!">Medium</button>
+            <button id="hardButton" type="button" class="button lead" onclick="hardMode()" data-toggle="tooltip" data-placement="right" title="Guess a number between 0 - 50 under 5 tries!">Hard</button>
+          </div>
+        </div>
+      </div>
+      <div id="userInputBar" class="container-fluid">
         <div class="row px-5">
+          <div class="col inputBoxSize">
+            <input id="nameInput" class="d-hide" type="text" onkeyup="waitForInput(event)" placeholder="Type here">
+          </div>
+        </div>
+      </div>
+      <div id="userReplayButtons" class="container-fluid">
+        <div class="row p-5">
           <div class="col">
-            <input id="nameInput" class="d-hide" type="text" onkeyup="waitForInput(event)" placeholder="Enter here...">
-            <!-- <input id="input3" class="d-none" type="text" placeholder="Enter here...">
-            <input id="input4" class="d-none" type="text" placeholder="Enter here...">
-            <input id="input5" class="d-none" type="text" placeholder="Enter here..."> -->
+            <button id="yesButton" type="button" class="button lead mx-2 px-3" onclick="replay()">Yes</button>
+            <button type="button" class="button lead mx-2 px-3" onclick="showMenu()">No</button>
           </div>
         </div>
       </div>
